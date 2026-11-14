@@ -1,0 +1,4 @@
+﻿config,modelo,n_cpu_moe,ngl,pp512_tps,tg128_tps
+gpu_ingenuo,Qwen3-30B-A3B-Q4_K_M.gguf,0,99,,
+hibrido,Qwen3-30B-A3B-Q4_K_M.gguf,40,99,66.90,6.56
+cpu_pura,Qwen3-30B-A3B-Q4_K_M.gguf,0,0,58.63,8.16
