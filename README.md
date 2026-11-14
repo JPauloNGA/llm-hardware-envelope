@@ -46,6 +46,24 @@ O **prefill** diverge porque mede regimes diferentes. Com um prompt curto (~19 t
 - **A CPU não é inútil.** Para um modelo 7B, ela entrega respostas em tempo real se você aceitar esperar o dobro.
 - O teto real da VRAM é **7.367 MiB**, não 8.192 — o Windows e o driver consomem o resto. Isso define quantas camadas de um modelo maior cabem na GPU.
 
+## MoE: o que acontece quando o modelo não cabe na VRAM
+
+O Mistral 7B cabe inteiro na RX 580. O Qwen3-30B-A3B (MoE, 30B totais, 3.3B ativos) não cabe: são ~18,5 GB de pesos para 7,3 GB de VRAM livre.
+
+A pergunta é: **qual é a melhor forma de dividir o modelo entre GPU e CPU?**
+
+Serão medidas três configurações com `llama-bench` (`pp512` e `tg128`, 3 repetições cada):
+
+| Configuração | O que faz | Hipótese |
+|---|---|---|
+| GPU ingênua (`-ngl 99`) | Tenta colocar tudo na GPU, derrama o resto para a RAM | Lenta: move experts pela PCIe 3.0 a cada token |
+| Híbrida (`-ngl 99 --n-cpu-moe N`) | Atenção na GPU, experts das primeiras N camadas na CPU | Viável: evita o tráfego de experts pela PCIe |
+| CPU pura (`-ngl 0`) | Tudo na CPU | Linha de base: o Xeon tem 32 GB de RAM quad-channel |
+
+Além das três configurações, uma varredura de `N` (20, 30, 40, 48) mostra a curva de throughput em função do offload, e onde está o ponto ótimo.
+
+*Resultados pendentes: o modelo está em download.*
+
 ## Próximos passos
 
 - [ ] Testar um modelo MoE (~30B) no modo híbrido GPU+CPU, para medir onde os dois colaboram.
