@@ -1,0 +1,7 @@
+﻿config,modelo,execucao,prompt_tps,geracao_tps,threads,ngl,contexto
+gpu_vulkan,mistral-7b-instruct-v0.2.Q4_K_M.gguf,1,68.9,20.4,28,100,2048
+gpu_vulkan,mistral-7b-instruct-v0.2.Q4_K_M.gguf,2,68.6,20.1,28,100,2048
+gpu_vulkan,mistral-7b-instruct-v0.2.Q4_K_M.gguf,3,69.8,20.1,28,100,2048
+cpu_pura,mistral-7b-instruct-v0.2.Q4_K_M.gguf,1,25.8,8.8,28,0,2048
+cpu_pura,mistral-7b-instruct-v0.2.Q4_K_M.gguf,2,25.1,9.0,28,0,2048
+cpu_pura,mistral-7b-instruct-v0.2.Q4_K_M.gguf,3,26.0,9.0,28,0,2048
