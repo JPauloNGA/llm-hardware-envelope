@@ -7,6 +7,9 @@ param(
     [int]$Repeticoes = 3
 )
 
+$ErrorActionPreference = "Continue"
+$ProgressPreference = "SilentlyContinue"
+
 "config,modelo,n_cpu_moe,ngl,pp512_tps,tg128_tps" | Out-File -FilePath $OutCsv -Encoding utf8
 
 $Configs = @(
@@ -23,11 +26,12 @@ foreach ($cfg in $Configs) {
 
     $pp = ""; $tg = ""
     foreach ($linha in ($saida -split "`n")) {
-        if ($linha -match "pp512") {
-            if ($linha -match "\|\s*([\d.]+)\s*±") { $pp = $matches[1] }
+        # Captura o numero antes do simbolo +- (que pode aparecer como ±, ┬▒, ou +-)
+        if ($linha -match "pp512" -and $linha -match "\|\s*([\d.]+)\s*[±┬+]") {
+            $pp = $matches[1]
         }
-        if ($linha -match "tg128") {
-            if ($linha -match "\|\s*([\d.]+)\s*±") { $tg = $matches[1] }
+        if ($linha -match "tg128" -and $linha -match "\|\s*([\d.]+)\s*[±┬+]") {
+            $tg = $matches[1]
         }
     }
     $n = if ($cfg.Args -contains "--n-cpu-moe") { $NCpuMoe } else { 0 }
