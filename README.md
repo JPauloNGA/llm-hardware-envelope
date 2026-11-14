@@ -62,7 +62,22 @@ Serão medidas três configurações com `llama-bench` (`pp512` e `tg128`, 3 rep
 
 Além das três configurações, uma varredura de `N` (20, 30, 40, 48) mostra a curva de throughput em função do offload, e onde está o ponto ótimo.
 
-*Resultados pendentes: o modelo está em download.*
+## MoE: o que acontece quando o modelo não cabe na VRAM
+
+O Mistral 7B cabe inteiro na RX 580. O Qwen3-30B-A3B (MoE, 30B totais, 3.3B ativos, Q4_K_M, 17,28 GB) não cabe: são 17,28 GB de pesos para 7,3 GB de VRAM livre.
+
+| Configuração | pp512 (prefill) | tg128 (decode) | Status |
+|---|---|---|---|
+| GPU ingênua (`-ngl 99`) | — | — | **Falhou: OOM de VRAM** |
+| Híbrida (`-ngl 99 --n-cpu-moe 40`) | 66,90 ± 4,51 | 6,56 ± 0,14 | Rodou |
+| CPU pura (`-ngl 0`) | 58,63 ± 6,23 | **8,16 ± 0,20** | Rodou |
+
+### O que os números dizem
+
+1. **A configuração ingênua falha.** O llama.cpp tenta alocar 941 MB de VRAM e o dispositivo recusa. Um MoE de 17,28 GB não cabe nos 7,3 GB livres sem offload.
+2. **A CPU pura vence a híbrida no decode** (8,16 vs 6,56 tok/s). No modo híbrido, o tráfego de experts pela PCIe 3.0 vira gargalo; na CPU pura, o Xeon processa tudo localmente.
+3. **No prefill, a híbrida vence** (66,90 vs 58,63), porque a GPU acelera a operação densa e paralelizável. Mas o decode domina a experiência, e aí a CPU ganha.
+4. **Um MoE de 30B em CPU pura (8,16 tok/s) é quase tão rápido quanto o Mistral 7B denso em CPU pura (9,74 tok/s)**, apesar de ter 4× mais parâmetros totais. Só 3,3B são ativados por token.
 
 ## Próximos passos
 
