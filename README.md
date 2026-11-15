@@ -6,6 +6,25 @@ Medições reproduzíveis de inferência local em hardware heterogêneo e obsole
 
 Qual é o envelope real de utilidade de um LLM local em hardware de 2016? Onde a GPU antiga vence, onde a CPU ainda serve, e onde nenhum dos dois é suficiente?
 
+## Em uma frase
+
+Hardware de 2016 (Xeon 14c/28t + RX 580 8 GB) roda LLMs localmente com interação de ~1 s — desde que você use a arquitetura certa: GPU para modelos que cabem na VRAM, CPU pura para MoE com poucos parâmetros ativos, prefix caching para TTFT, e modelos pequenos no pipeline de voz.
+
+## Os três achados principais
+
+1. **MoE em CPU pura vence híbrido no decode** (8,16 vs 7,36 tok/s). O Qwen3-30B-A3B não cabe nos 7,3 GB de VRAM; o split ingênuo falha por OOM, e mesmo o split ótimo (`--n-cpu-moe 40`) perde para a CPU pura porque evita o tráfego de experts pela PCIe 3.0.
+2. **Prefix caching reduz o TTFT em 10×** (8.415 → 847 ms no Mistral 7B). É a alavanca que torna a interação de 1 s possível para prompts com system prompt fixo.
+3. **Pipeline de voz completo em 892 ms** (STT 207 + LLM 604 + TTS 81), com modelos que somam < 1 GB em disco. O LLM é o maior contribuinte (68%), o STT é 23% e o TTS é 9%.
+
+## Estrutura do repositório
+
+| Pasta | O que tem |
+|---|---|
+| `data/` | CSVs com todas as medições brutas e gráficos gerados |
+| `scripts/` | Scripts de benchmark e de geração de gráficos |
+| `notes/` | Metodologia, hardware, caveats |
+| `README.md` | Este documento |
+
 ## Hardware
 
 | Componente | Especificação |
