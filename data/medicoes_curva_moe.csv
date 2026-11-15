@@ -1,0 +1,5 @@
+n_cpu_moe,pp512_tps,tg128_tps,status
+20,,,OOM
+30,,,OOM
+40,65.94,7.36,ok
+48,62.23,6.85,ok
