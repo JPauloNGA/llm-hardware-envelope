@@ -141,6 +141,10 @@ O tempo total de 3.989 ms inclui o cold start do `llama-server` (o modelo é car
 
 > **Nota sobre o Piper:** a API do `piper-tts` mudou na versão 1.3.0. `synthesize()` agora retorna um gerador de `AudioChunk`; para escrever direto em um WAV, use `synthesize_wav()`. O `assistant.py` já usa a API nova.
 
+### Demo em modo texto
+
+`scripts/diario_texto.ps1` faz 5 perguntas ao `llama-server` e registra a latência de cada uma. O resultado está em `notes/diario.md`: o Qwen 0.5B acertou todas as 5, com latência de 133–679 ms (servidor quente).
+
 ## Próximos passos
 
 - [x] Medir Mistral 7B em GPU e CPU (dois instrumentos: `llama-cli` e `llama-bench`).
