@@ -1,0 +1,4 @@
+etapa,latencia_ms
+stt_whisper_tiny_q4,
+llm_qwen05b_40tok,
+tts_piper,
