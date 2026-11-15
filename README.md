@@ -116,34 +116,36 @@ O ganho absoluto é muito maior no MoE (74,6× vs 9,9×), mas o TTFT quente é p
 
 O TTFT frio de 67.960 ms (68 segundos) é o custo de processar um prefixo de ~250 tokens em um MoE de 17 GB em CPU pura, sem cache. Com o cache, cai para 911 ms — dentro da meta de 1 s. É a prova de que a técnica funciona para modelos que não cabem na VRAM.
 
-### Demo funcional: `scripts/assistant.py`
+## Demo funcional
+
+### `scripts/assistant.py` — pipeline de voz
 
 O script orquestra os três estágios e mede a latência de cada um. Requer `faster-whisper`, `piper-tts` e um `llama-server` rodando com o Qwen 0.5B na porta 8080.
 
-\`\`\`powershell
+```powershell
 # Terminal 1: servidor do LLM
 .\llama-server.exe -m C:\models\voice\qwen2.5-0.5b-instruct-q4_k_m.gguf -ngl 0 -t 28 -c 2048 -np 1 --port 8080
 
 # Terminal 2: assistente
 python scripts\assistant.py --input pergunta.wav --output resposta.wav
-\`\`\`
+```
 
 Saída típica com o `jfk.wav` (11 s de áudio):
 
-\`\`\`
+```
 [1/3] STT...  'And so my fellow Americans...'  (482 ms)
 [2/3] LLM...  'The statement reflects...'      (2663 ms, inclui cold start)
 [3/3] TTS...  resposta_jfk.wav                 (844 ms)
 === Latencia ponta a ponta: 3989 ms ===
-\`\`\`
+```
 
 O tempo total de 3.989 ms inclui o cold start do `llama-server` (o modelo é carregado na primeira requisição). Com o servidor quente e uma pergunta curta (3 s de áudio, resposta de 40 tokens), a latência esperada é a da tabela acima: ~892 ms.
 
 > **Nota sobre o Piper:** a API do `piper-tts` mudou na versão 1.3.0. `synthesize()` agora retorna um gerador de `AudioChunk`; para escrever direto em um WAV, use `synthesize_wav()`. O `assistant.py` já usa a API nova.
 
-### Demo em modo texto
+### `scripts/diario_texto.ps1` — modo texto
 
-`scripts/diario_texto.ps1` faz 5 perguntas ao `llama-server` e registra a latência de cada uma. O resultado está em `notes/diario.md`: o Qwen 0.5B acertou todas as 5, com latência de 133–679 ms (servidor quente).
+O script faz 5 perguntas ao `llama-server` e registra a latência de cada uma. O resultado está em `notes/diario.md`: o Qwen 0.5B acertou todas as 5, com latência de 133–679 ms (servidor quente).
 
 ## Próximos passos
 
@@ -154,4 +156,4 @@ O tempo total de 3.989 ms inclui o cold start do `llama-server` (o modelo é car
 - [x] Speculative decoding com ngram-simple (sem ganho neste caso).
 - [x] Pipeline de voz: Whisper + LLM + TTS, latência ponta a ponta.
 - [x] Assistente funcional de voz (`scripts/assistant.py`).
-- [ ] Diário de uso real: preencher `notes/diario.md` com a experiência de uso ao longo dos dias.
+- [x] Diário de uso real em modo texto (`notes/diario.md`).
