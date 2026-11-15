@@ -32,17 +32,25 @@ O **decode** concorda entre os dois instrumentos (20,1 vs 20,6 na GPU; 9,0 vs 9,
 
 O **prefill** diverge porque mede regimes diferentes. Com um prompt curto (~19 tokens), o custo fixo de inicialização do grafo e das transferências domina, e a GPU parece 2,7× mais rápida. Com 512 tokens (`pp512`), o hardware satura: o Xeon sobe para 91 t/s, ainda atrás da GPU (115 t/s), mas muito mais perto. **Nenhum dos dois números está errado; eles respondem a perguntas diferentes.** O README reporta os dois, com o instrumento e o comprimento do prompt explícitos.
 
+### A curva de offload: onde a VRAM estoura
+
+| `--n-cpu-moe` | pp512 (prefill) | tg128 (decode) | Status |
+|---|---|---|---|
+| 20 | — | — | **OOM: VRAM insuficiente** |
+| 30 | — | — | **OOM: VRAM insuficiente** |
+| 40 | 65,94 ± 5,13 | **7,36 ± 0,20** | OK |
+| 48 | 62,23 ± 5,18 | 6,85 ± 0,17 | OK |
+
+![Curva de offload](data/grafico_curva_moe.png)
+
+Com 7,3 GB de VRAM livre, o mínimo de camadas de experts na CPU para o modelo caber é entre 30 e 40. Abaixo disso, o llama.cpp falha ao alocar os buffers de computação para o prefill. Entre os valores que rodam, **N=40 é o ponto ótimo** (7,36 tok/s); N=48 move mais experts do que o necessário para a CPU e perde 7% de desempenho.
+
+Mesmo no ponto ótimo, a **CPU pura continua ~11% mais rápida no decode** (8,16 vs 7,36 tok/s). Para este MoE, a GPU não compensa no decode: o tráfego de experts pela PCIe 3.0 anula o ganho da atenção acelerada.
+
 ### O que os números dizem
 
 - **A GPU vence nas duas fases**, mas por margens diferentes: ~2,2× no decode e ~1,3× no prefill saturado (512 tokens).
 - **20 tok/s de decode** é confortável para uso interativo. **9,7 tok/s na CPU** é utilizável, mas no limite da paciência para respostas longas.
-- **A CPU não é inútil.** Para um modelo 7B, ela entrega respostas em tempo real se você aceitar esperar o dobro.
-- O teto real da VRAM é **7.367 MiB**, não 8.192 — o Windows e o driver consomem o resto. Isso define quantas camadas de um modelo maior cabem na GPU.
-
-## O que os números dizem
-
-- **A GPU vence nas duas fases**, mas por margens diferentes: ~2,7× no prefill e ~2,2× no decode.
-- **20 tok/s de decode** é confortável para uso interativo. **9 tok/s na CPU** é utilizável, mas no limite da paciência.
 - **A CPU não é inútil.** Para um modelo 7B, ela entrega respostas em tempo real se você aceitar esperar o dobro.
 - O teto real da VRAM é **7.367 MiB**, não 8.192 — o Windows e o driver consomem o resto. Isso define quantas camadas de um modelo maior cabem na GPU.
 
@@ -81,6 +89,9 @@ O Mistral 7B cabe inteiro na RX 580. O Qwen3-30B-A3B (MoE, 30B totais, 3.3B ativ
 
 ## Próximos passos
 
-- [ ] Testar um modelo MoE (~30B) no modo híbrido GPU+CPU, para medir onde os dois colaboram.
-- [ ] Medir TTFT (time-to-first-token) separadamente do throughput.
-- [ ] Adicionar um modelo denso maior (13B) para encontrar o ponto em que a GPU deixa de caber.
+- [x] Medir Mistral 7B em GPU e CPU (dois instrumentos: `llama-cli` e `llama-bench`).
+- [x] Medir Qwen3-30B-A3B (MoE) em três configurações de offload.
+- [x] Curva de offload: como o decode muda com `--n-cpu-moe`.
+- [ ] Speculative decoding: medir o ganho de latência com um draft model.
+- [ ] Prefix caching: medir o TTFT com e sem cache de prompt.
+- [ ] Pipeline de voz: Whisper + LLM + TTS, latência ponta a ponta.
