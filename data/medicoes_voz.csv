@@ -1,3 +1,5 @@
-etapa,latencia_ms
-llm_qwen05b_40tok,604
-tts_piper_frase_curta,81
+etapa,latencia_ms,nota
+stt_whisper_tiny,207,RTF 0.069 medido em jfk.wav (764ms para 11s); extrapolado para 3s de audio
+llm_qwen05b_40tok,604,66.26 tok/s medido com llama-bench; 40 tokens
+tts_piper_frase_curta,81,mediana de 3 frases com bench_tts.py
+total_pipeline,892,soma das tres etapas
