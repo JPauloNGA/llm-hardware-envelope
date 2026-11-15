@@ -1,0 +1,4 @@
+modelo,parametros,velocidade_pt_tps,velocidade_en_tps,tokens_pt,tokens_en
+Qwen_2.5_1.5B,1.5B,39.64,40.47,50,31
+Qwen_2.5_3B,3B,29.02,29.17,36,27
+Llama_3.2_1B,1B,22.11,22.45,50,38

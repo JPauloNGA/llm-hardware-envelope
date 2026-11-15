@@ -1,0 +1,5 @@
+pergunta,categoria,especialista,tempo_classificacao_s,tempo_total_s,velocidade_tps
+inverter_lista_python,codigo,qwen2.5-coder:7b,2.94,12.22,14.73
+servo_motor_vs_passo,mecatronica,jarvis,2.33,7.41,38.92
+sensor_efeito_hall,mecatronica,jarvis,2.36,7.20,38.52
+quem_foi_alan_turing,geral,qwen2.5:3b,2.28,23.64,28.66

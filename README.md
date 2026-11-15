@@ -116,6 +116,22 @@ O ganho absoluto é muito maior no MoE (74,6× vs 9,9×), mas o TTFT quente é p
 
 O TTFT frio de 67.960 ms (68 segundos) é o custo de processar um prefixo de ~250 tokens em um MoE de 17 GB em CPU pura, sem cache. Com o cache, cai para 911 ms — dentro da meta de 1 s. É a prova de que a técnica funciona para modelos que não cabem na VRAM.
 
+## Escolha de modelo e configuração
+
+O envelope de hardware não é só "quão rápido o equipamento vai". É também "o que vale a pena rodar nele". Os experimentos do repositório satélite [`llm_study`](https://github.com/JPauloNGA/llm_study) respondem a essa pergunta:
+
+| Dimensão | Achado | Implicação |
+|---|---|---|
+| **KV caching** | Segunda pergunta no mesmo contexto: 0,32 s vs 0,58 s | O cache de contexto reduz a latência em ~45%, mesmo com prompt 5× maior |
+| **Quantização** | Q4 é 9% mais rápido e 40% menor que Q8 | Q4_K_M é o ponto ótimo para hardware de 2016 |
+| **Idioma** | Inglês gera 28% menos tokens que PT-BR | Respostas em inglês são ~28% mais rápidas |
+| **Modelo** | Qwen 1.5B é ~80% mais rápido que Llama 3.2 1B | Para o assistente, Qwen 1.5B é o melhor custo-benefício |
+| **Roteamento** | Classificador + especialistas por categoria | Versão factível do roteamento de especialistas: ~2,3 s para classificar, 7–24 s para responder |
+
+Esses dados justificam as escolhas do pipeline de voz: Qwen 0.5B (não 1.5B) para o LLM, porque a latência é mais importante que a qualidade marginal; Piper com voz em inglês, porque o TTS em inglês é mais eficiente; e `cache_prompt: true` em todas as requisições.
+
+O experimento de roteamento é a versão factível do que o [`trunk-and-branches-isaque-2`](https://github.com/lcsmotta7/trunk-and-branches-isaque-2) propõe com colunas DoRA: em vez de treinar colunas especializadas em um modelo congelado, roteamos **modelos inteiros** por categoria. O custo é maior (cada especialista é um modelo completo), mas o método funciona sem GPU CUDA.
+
 ## Demo funcional
 
 ### `scripts/assistant.py` — pipeline de voz

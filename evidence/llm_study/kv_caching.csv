@@ -1,0 +1,4 @@
+cenario,tokens_prompt,tokens_gerados,tempo_s,velocidade_tps
+pergunta_1_contexto_longo,203,28,0.70,40.16
+pergunta_2_mesmo_contexto_cache,253,13,0.32,40.01
+pergunta_isolada_sem_cache,47,23,0.58,39.36
