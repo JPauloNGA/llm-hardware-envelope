@@ -87,6 +87,19 @@ O Mistral 7B cabe inteiro na RX 580. O Qwen3-30B-A3B (MoE, 30B totais, 3.3B ativ
 3. **No prefill, a híbrida vence** (66,90 vs 58,63), porque a GPU acelera a operação densa e paralelizável. Mas o decode domina a experiência, e aí a CPU ganha.
 4. **Um MoE de 30B em CPU pura (8,16 tok/s) é quase tão rápido quanto o Mistral 7B denso em CPU pura (9,74 tok/s)**, apesar de ter 4× mais parâmetros totais. Só 3,3B são ativados por token.
 
+## Pipeline de voz: os três estágios medidos
+
+| Etapa | Modelo | Latência | Nota |
+|---|---|---|---|
+| STT | Whisper tiny (f16) | **207 ms** | RTF 0,069; extrapolado para 3 s de áudio |
+| LLM | Qwen 2.5 0.5B Q4_K_M | **604 ms** | 40 tokens a 66,26 tok/s |
+| TTS | Piper (en_US-lessac-medium) | **81 ms** | Mediana de 3 frases curtas |
+| **Total** | | **892 ms** | |
+
+O pipeline completo cabe em **menos de 1 segundo** no Xeon E5-2680 v4, sem GPU, com modelos que somam menos de 1 GB em disco. O LLM é o maior contribuinte (68% da latência), seguido do STT (23%) e do TTS (9%).
+
+O número do STT é uma extrapolação: medimos 764 ms para 11 s de áudio (RTF 0,069) e extrapolamos para 3 s, que é o comprimento típico de uma pergunta de voz. O TTS foi medido com o pacote Python `piper-tts`, porque o binário Windows do Piper tem bugs conhecidos de saída.
+
 ## Próximos passos
 
 - [x] Medir Mistral 7B em GPU e CPU (dois instrumentos: `llama-cli` e `llama-bench`).
