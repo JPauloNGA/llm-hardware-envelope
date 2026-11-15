@@ -1,3 +1,5 @@
+> **Este repositório é parte de um estudo maior.** A tese consolidada está em [`small-model-orchestration`](https://github.com/JPauloNGA/small-model-orchestration): como orquestrar modelos pequenos para capacidade de agente em hardware de 2016.
+
 # LLM Hardware Envelope
 
 Medições reproduzíveis de inferência local em hardware heterogêneo e obsoleto: um Xeon de 14 núcleos e uma RX 580 de 8 GB, sem GPU moderna, sem nuvem.
