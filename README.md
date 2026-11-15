@@ -146,14 +146,3 @@ O tempo total de 3.989 ms inclui o cold start do `llama-server` (o modelo é car
 ### `scripts/diario_texto.ps1` — modo texto
 
 O script faz 5 perguntas ao `llama-server` e registra a latência de cada uma. O resultado está em `notes/diario.md`: o Qwen 0.5B acertou todas as 5, com latência de 133–679 ms (servidor quente).
-
-## Próximos passos
-
-- [x] Medir Mistral 7B em GPU e CPU (dois instrumentos: `llama-cli` e `llama-bench`).
-- [x] Medir Qwen3-30B-A3B (MoE) em três configurações de offload.
-- [x] Curva de offload: como o decode muda com `--n-cpu-moe`.
-- [x] Prefix caching: TTFT com e sem cache (denso e MoE).
-- [x] Speculative decoding com ngram-simple (sem ganho neste caso).
-- [x] Pipeline de voz: Whisper + LLM + TTS, latência ponta a ponta.
-- [x] Assistente funcional de voz (`scripts/assistant.py`).
-- [x] Diário de uso real em modo texto (`notes/diario.md`).
