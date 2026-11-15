@@ -75,22 +75,6 @@ Mesmo no ponto ótimo, a **CPU pura continua ~11% mais rápida no decode** (8,16
 
 ## MoE: o que acontece quando o modelo não cabe na VRAM
 
-O Mistral 7B cabe inteiro na RX 580. O Qwen3-30B-A3B (MoE, 30B totais, 3.3B ativos) não cabe: são ~18,5 GB de pesos para 7,3 GB de VRAM livre.
-
-A pergunta é: **qual é a melhor forma de dividir o modelo entre GPU e CPU?**
-
-Serão medidas três configurações com `llama-bench` (`pp512` e `tg128`, 3 repetições cada):
-
-| Configuração | O que faz | Hipótese |
-|---|---|---|
-| GPU ingênua (`-ngl 99`) | Tenta colocar tudo na GPU, derrama o resto para a RAM | Lenta: move experts pela PCIe 3.0 a cada token |
-| Híbrida (`-ngl 99 --n-cpu-moe N`) | Atenção na GPU, experts das primeiras N camadas na CPU | Viável: evita o tráfego de experts pela PCIe |
-| CPU pura (`-ngl 0`) | Tudo na CPU | Linha de base: o Xeon tem 32 GB de RAM quad-channel |
-
-Além das três configurações, uma varredura de `N` (20, 30, 40, 48) mostra a curva de throughput em função do offload, e onde está o ponto ótimo.
-
-## MoE: o que acontece quando o modelo não cabe na VRAM
-
 O Mistral 7B cabe inteiro na RX 580. O Qwen3-30B-A3B (MoE, 30B totais, 3.3B ativos, Q4_K_M, 17,28 GB) não cabe: são 17,28 GB de pesos para 7,3 GB de VRAM livre.
 
 | Configuração | pp512 (prefill) | tg128 (decode) | Status |
@@ -118,6 +102,19 @@ O Mistral 7B cabe inteiro na RX 580. O Qwen3-30B-A3B (MoE, 30B totais, 3.3B ativ
 O pipeline completo cabe em **menos de 1 segundo** no Xeon E5-2680 v4, sem GPU, com modelos que somam menos de 1 GB em disco. O LLM é o maior contribuinte (68% da latência), seguido do STT (23%) e do TTS (9%).
 
 O número do STT é uma extrapolação: medimos 764 ms para 11 s de áudio (RTF 0,069) e extrapolamos para 3 s, que é o comprimento típico de uma pergunta de voz. O TTS foi medido com o pacote Python `piper-tts`, porque o binário Windows do Piper tem bugs conhecidos de saída.
+
+## Prefix caching: denso vs MoE
+
+O prefix caching é a alavanca que reduz o TTFT quando o prompt tem um prefixo fixo (system prompt). Medimos nos dois modelos:
+
+| Modelo | TTFT frio | TTFT quente | Ganho |
+|---|---|---|---|
+| Mistral 7B (denso) | 8.415 ms | 847 ms | 9,9× |
+| Qwen3-30B-A3B (MoE) | **67.960 ms** | **911 ms** | **74,6×** |
+
+O ganho absoluto é muito maior no MoE (74,6× vs 9,9×), mas o TTFT quente é praticamente o mesmo nos dois modelos (911 vs 847 ms). Isso mostra que o cache elimina o custo de reprocessar o prefixo **independentemente do tamanho do modelo** — o que sobra é o custo de processar o novo token e gerar a resposta, que é dominado pela latência de decode, não pelo tamanho do modelo.
+
+O TTFT frio de 67.960 ms (68 segundos) é o custo de processar um prefixo de ~250 tokens em um MoE de 17 GB em CPU pura, sem cache. Com o cache, cai para 911 ms — dentro da meta de 1 s. É a prova de que a técnica funciona para modelos que não cabem na VRAM.
 
 ### Demo funcional: `scripts/assistant.py`
 
@@ -149,6 +146,8 @@ O tempo total de 3.989 ms inclui o cold start do `llama-server` (o modelo é car
 - [x] Medir Mistral 7B em GPU e CPU (dois instrumentos: `llama-cli` e `llama-bench`).
 - [x] Medir Qwen3-30B-A3B (MoE) em três configurações de offload.
 - [x] Curva de offload: como o decode muda com `--n-cpu-moe`.
-- [ ] Speculative decoding: medir o ganho de latência com um draft model.
-- [ ] Prefix caching: medir o TTFT com e sem cache de prompt.
-- [ ] Pipeline de voz: Whisper + LLM + TTS, latência ponta a ponta.
+- [x] Prefix caching: TTFT com e sem cache (denso e MoE).
+- [x] Speculative decoding com ngram-simple (sem ganho neste caso).
+- [x] Pipeline de voz: Whisper + LLM + TTS, latência ponta a ponta.
+- [x] Assistente funcional de voz (`scripts/assistant.py`).
+- [ ] Diário de uso real: preencher `notes/diario.md` com a experiência de uso ao longo dos dias.
