@@ -119,6 +119,31 @@ O pipeline completo cabe em **menos de 1 segundo** no Xeon E5-2680 v4, sem GPU, 
 
 O número do STT é uma extrapolação: medimos 764 ms para 11 s de áudio (RTF 0,069) e extrapolamos para 3 s, que é o comprimento típico de uma pergunta de voz. O TTS foi medido com o pacote Python `piper-tts`, porque o binário Windows do Piper tem bugs conhecidos de saída.
 
+### Demo funcional: `scripts/assistant.py`
+
+O script orquestra os três estágios e mede a latência de cada um. Requer `faster-whisper`, `piper-tts` e um `llama-server` rodando com o Qwen 0.5B na porta 8080.
+
+\`\`\`powershell
+# Terminal 1: servidor do LLM
+.\llama-server.exe -m C:\models\voice\qwen2.5-0.5b-instruct-q4_k_m.gguf -ngl 0 -t 28 -c 2048 -np 1 --port 8080
+
+# Terminal 2: assistente
+python scripts\assistant.py --input pergunta.wav --output resposta.wav
+\`\`\`
+
+Saída típica com o `jfk.wav` (11 s de áudio):
+
+\`\`\`
+[1/3] STT...  'And so my fellow Americans...'  (482 ms)
+[2/3] LLM...  'The statement reflects...'      (2663 ms, inclui cold start)
+[3/3] TTS...  resposta_jfk.wav                 (844 ms)
+=== Latencia ponta a ponta: 3989 ms ===
+\`\`\`
+
+O tempo total de 3.989 ms inclui o cold start do `llama-server` (o modelo é carregado na primeira requisição). Com o servidor quente e uma pergunta curta (3 s de áudio, resposta de 40 tokens), a latência esperada é a da tabela acima: ~892 ms.
+
+> **Nota sobre o Piper:** a API do `piper-tts` mudou na versão 1.3.0. `synthesize()` agora retorna um gerador de `AudioChunk`; para escrever direto em um WAV, use `synthesize_wav()`. O `assistant.py` já usa a API nova.
+
 ## Próximos passos
 
 - [x] Medir Mistral 7B em GPU e CPU (dois instrumentos: `llama-cli` e `llama-bench`).
